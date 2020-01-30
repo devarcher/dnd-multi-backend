@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import DnDPreview, { Context } from 'react-dnd-preview';
 import { PreviewManager } from 'dnd-multi-backend';
 
+// TODO: match react-dnd-preview API
+// TODO: rework PreviewManager through DndContext from 'react-dnd'
 const Preview = (props) => {
   const [enabled, setEnabled] = useState(false);
 
