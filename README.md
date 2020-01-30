@@ -19,6 +19,8 @@ This project also contains some helpers (available standalone or included in oth
 
  - Write documentation & examples for `dnd-multi-backend`
  - Write documentation & examples for `react-dnd-preview`
+ - Add React.createPortal and improvements to `react-dnd-preview`
+ - Consider adding hooks for previews
 
 
 ## Thanks

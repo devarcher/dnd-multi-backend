@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import DnDPreview, { Context } from 'react-dnd-preview';
-import { PreviewManager } from 'dnd-multi-backend';
+import { DndContext } from 'react-dnd';
 
 const Preview = (props) => {
   const [enabled, setEnabled] = useState(false);
+  const dndContext = useContext(DndContext);
 
   useEffect(() => {
     const observer = {
@@ -12,9 +13,10 @@ const Preview = (props) => {
       },
     };
 
-    PreviewManager.register(observer);
+    const previews = dndContext.dragDropManager.getBackend().previews;
+    previews.register(observer);
     return () => {
-      PreviewManager.unregister(observer);
+      previews.unregister(observer);
     };
   });
 

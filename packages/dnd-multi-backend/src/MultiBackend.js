@@ -23,8 +23,6 @@ class PreviewList {
   }
 }
 
-export const PreviewManager = new PreviewList();
-
 export default class {
   constructor(manager, context, sourceOptions) {
     const options = objectAssign({backends: []}, sourceOptions || {});
@@ -36,10 +34,20 @@ export default class {
       );
     }
 
-    this.current = 0;
+    this.current = null;
 
-    this.backends = [];
+    this.backends = {};
+    this.backendsList = [];
     options.backends.forEach((backend) => {
+      if (!backend.id) {
+        throw new Error(
+          `You must specify an 'id' property in your Backend entry: ${backend}
+          see this guide: https://github.com/louisbrunner/dnd-multi-backend/tree/master/packages/react-dnd-multi-backend#migrating-from-4xx`
+        );
+      }
+      if (this.backends[backend.id]) {
+        throw new Error(`You must specify a unique 'id' property in your Backend entry: ${backend} (conflicts with: ${this.backends[backend.id]})`);
+      }
       if (!backend.backend) {
         throw new Error(`You must specify a 'backend' property in your Backend entry: ${backend}`);
       }
@@ -49,15 +57,23 @@ export default class {
           `You must specify a valid 'transition' property (either undefined or the return of 'createTransition') in your Backend entry: ${backend}`
         );
       }
-      this.backends.push({
+      if (this.current === null) {
+        this.current = backend.id;
+      }
+      const backendRecord = ({
+        id: backend.id,
         instance: backend.backend(manager, context, backend.options),
         preview: (backend.preview || false),
         transition,
         skipDispatchOnTransition: Boolean(backend.skipDispatchOnTransition),
       });
+      this.backends[backend.id] = backendRecord;
+      this.backendsList.push(backendRecord);
     });
 
     this.nodes = {};
+
+    this.previews = new PreviewList();
   }
 
   // DnD Backend API
@@ -101,7 +117,7 @@ export default class {
 
   // Multi Backend Listeners
   addEventListeners = (target) => {
-    this.backends.forEach((backend) => {
+    this.backendsList.forEach((backend) => {
       if (backend.transition) {
         target.addEventListener(backend.transition.event, this.backendSwitcher, true);
       }
@@ -109,7 +125,7 @@ export default class {
   }
 
   removeEventListeners = (target) => {
-    this.backends.forEach((backend) => {
+    this.backendsList.forEach((backend) => {
       if (backend.transition) {
         target.removeEventListener(backend.transition.event, this.backendSwitcher, true);
       }
@@ -120,13 +136,11 @@ export default class {
   backendSwitcher = (event) => {
     const oldBackend = this.current;
 
-    let i = 0;
-    this.backends.some((backend) => {
-      if (i !== this.current && backend.transition && backend.transition.check(event)) {
-        this.current = i;
+    this.backendsList.some((backend) => {
+      if (backend.id !== this.current && backend.transition && backend.transition.check(event)) {
+        this.current = backend.id;
         return true;
       }
-      i += 1;
       return false;
     });
 
@@ -137,7 +151,7 @@ export default class {
         node.handler();
         node.handler = this.callBackend(node.func, node.args);
       });
-      PreviewManager.backendChanged(this);
+      this.previews.backendChanged(this);
 
       const newBackend = this.backends[this.current];
       newBackend.instance.setup();
