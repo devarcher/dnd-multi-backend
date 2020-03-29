@@ -1,0 +1,8 @@
+# Input
+examples
+__tests__
+src
+
+# npm
+node_modules
+npm-debug.log
